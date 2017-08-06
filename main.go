@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -10,7 +10,13 @@ import (
 )
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Fprint(w, "Game")
+	tmpl, err := template.ParseFiles("templates/index.html")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tmpl.ExecuteTemplate(w, "index", nil)
 }
 
 func getPort() string {
