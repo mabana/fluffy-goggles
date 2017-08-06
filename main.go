@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 )
+
+var upgrader = websocket.Upgrader{}
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	tmpl, err := template.ParseFiles("templates/index.html")
@@ -17,6 +20,33 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	tmpl.ExecuteTemplate(w, "index", nil)
+}
+
+func clientLoop(conn *websocket.Conn) {
+	defer conn.Close()
+
+	for {
+		messageType, p, err := conn.ReadMessage()
+
+		if err != nil {
+			return
+		}
+
+		if err := conn.WriteMessage(messageType, p); err != nil {
+			return
+		}
+	}
+}
+
+func Wss(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+
+	if err != nil {
+		log.Print("Upgrade: ", err)
+		return
+	}
+
+	go clientLoop(conn)
 }
 
 func getPort() string {
@@ -33,6 +63,7 @@ func main() {
 	router := httprouter.New()
 
 	router.GET("/", Index)
+	router.GET("/wss", Wss)
 	router.ServeFiles("/assets/*filepath", http.Dir("public"))
 
 	log.Fatal(http.ListenAndServe(getPort(), router))
