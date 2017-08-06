@@ -1,8 +1,10 @@
+const path = require('path');
+
 module.exports = {
-    entry: "./src/main.tsx",
+    entry: "./src/main.ts",
     output: {
         filename: "game.js",
-        path: __dirname + "../public/"
+        path: path.join(__dirname, "../public/")
     },
 
     devtool: "source-map",
