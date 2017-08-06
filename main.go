@@ -11,6 +11,7 @@ import (
 )
 
 var upgrader = websocket.Upgrader{}
+var game = Game{make([]Client, 0, 100)}
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	tmpl, err := template.ParseFiles("templates/index.html")
@@ -26,14 +27,19 @@ func clientLoop(conn *websocket.Conn) {
 	defer conn.Close()
 
 	for {
-		messageType, p, err := conn.ReadMessage()
+		/*
+			messageType, p, err := conn.ReadMessage()
 
-		if err != nil {
-			return
-		}
+			if err != nil {
+				return
+			}
 
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			return
+			if err := conn.WriteMessage(messageType, p); err != nil {
+				return
+			}
+		*/
+		if _, _, err := conn.NextReader(); err != nil {
+			break
 		}
 	}
 }
@@ -46,6 +52,7 @@ func Wss(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
+	game.RegisterClient(conn)
 	go clientLoop(conn)
 }
 
