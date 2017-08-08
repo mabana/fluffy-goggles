@@ -1,5 +1,11 @@
 import { Player } from './player'
 
+let websocket = new WebSocket("ws://127.0.0.1:3000/wss")
+
+websocket.onopen = function(ev: Event) {
+    websocket.send("First message")
+}
+
 let mainCanvas: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById('main-canvas')
 let ctx: CanvasRenderingContext2D = <CanvasRenderingContext2D> mainCanvas.getContext('2d')
 
@@ -47,23 +53,29 @@ let player = new Player(1, 1)
 render(mainCanvas, ctx, map, player)
 
 document.addEventListener("keydown", function(this: Document, ev: KeyboardEvent){
+    ev.preventDefault()
+
     switch(ev.keyCode) {
         case 37: {
             player.moveLeft()
+            websocket.send("move:left")
             break
         }
 
         case 38: {
             player.moveUp()
+            websocket.send("move:up")
             break
         }
 
         case 39: {
             player.moveRight()
+            websocket.send("move:right")
             break
         }
 
         case 40: {
+            websocket.send("move:down")
             player.moveBottom()
         }
     }

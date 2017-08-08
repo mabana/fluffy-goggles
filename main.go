@@ -23,27 +23,6 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	tmpl.ExecuteTemplate(w, "index", nil)
 }
 
-func clientLoop(conn *websocket.Conn) {
-	defer conn.Close()
-
-	for {
-		/*
-			messageType, p, err := conn.ReadMessage()
-
-			if err != nil {
-				return
-			}
-
-			if err := conn.WriteMessage(messageType, p); err != nil {
-				return
-			}
-		*/
-		if _, _, err := conn.NextReader(); err != nil {
-			break
-		}
-	}
-}
-
 func Wss(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 
@@ -53,14 +32,13 @@ func Wss(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	game.RegisterClient(conn)
-	go clientLoop(conn)
 }
 
 func getPort() string {
 	port := os.Getenv("PORT")
 
 	if len(port) == 0 {
-		port = "8080"
+		port = "3000"
 	}
 
 	return (":" + port)
