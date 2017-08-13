@@ -11,9 +11,9 @@ import (
 )
 
 var upgrader = websocket.Upgrader{}
-var game = Game{make([]Client, 0, 100)}
+var game *Game
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	tmpl, err := template.ParseFiles("templates/index.html")
 
 	if err != nil {
@@ -23,7 +23,7 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	tmpl.ExecuteTemplate(w, "index", nil)
 }
 
-func Wss(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func wss(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -47,9 +47,27 @@ func getPort() string {
 func main() {
 	router := httprouter.New()
 
-	router.GET("/", Index)
-	router.GET("/wss", Wss)
+	router.GET("/", index)
+	router.GET("/wss", wss)
 	router.ServeFiles("/assets/*filepath", http.Dir("public"))
+
+	gameMap := [][]int{
+		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	}
+
+	game = &Game{make([]Client, 0, 100), gameMap}
+	go game.ServerUpdateLoop()
 
 	log.Fatal(http.ListenAndServe(getPort(), router))
 }

@@ -1,9 +1,11 @@
-import { Player } from './player'
-
 let websocket = new WebSocket("ws://127.0.0.1:3000/wss")
 
 websocket.onopen = function(ev: Event) {
     websocket.send("First message")
+}
+
+websocket.onmessage = function(ev: MessageEvent) {
+    map = JSON.parse(ev.data)
 }
 
 let mainCanvas: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById('main-canvas')
@@ -17,17 +19,30 @@ function drawCell(ctx: CanvasRenderingContext2D, x:number, y:number, color: stri
     ctx.stroke()
 }
 
-function render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, map: number[][], player: Player) {
+function mapFieldColor(fieldContent: number): string {
+    switch (fieldContent){
+        case 1: {
+            return "#333"
+        }
+
+        case 2: {
+            return "#f3f"
+        }
+
+        default: {
+            return "#fff"
+        }
+    }
+}
+
+function render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, map: number[][]) {
     ctx.save()
 
     for(let y: number = 0; y<12; y++) {
         for(let x: number = 0; x<16; x++) {
             let cell: number = map[y][x]
-            let color: string = (cell == 1) ? "#333" : "#fff"
-            drawCell(ctx, x, y, color)
+            drawCell(ctx, x, y, mapFieldColor(cell))
         }
-
-        drawCell(ctx, player.x, player.y, "#f3f")
     }
 
     ctx.restore()
@@ -48,36 +63,37 @@ let map: number[][] = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ]
 
-let player = new Player(1, 1)
-
-render(mainCanvas, ctx, map, player)
+render(mainCanvas, ctx, map)
 
 document.addEventListener("keydown", function(this: Document, ev: KeyboardEvent){
     ev.preventDefault()
 
     switch(ev.keyCode) {
         case 37: {
-            player.moveLeft()
             websocket.send("move:left")
             break
         }
 
         case 38: {
-            player.moveUp()
             websocket.send("move:up")
             break
         }
 
         case 39: {
-            player.moveRight()
             websocket.send("move:right")
             break
         }
 
         case 40: {
             websocket.send("move:down")
-            player.moveBottom()
+            break
         }
-    }
-    render(mainCanvas, ctx, map, player)
+    }  
 })
+
+function step() {
+    render(mainCanvas, ctx, map)
+    window.requestAnimationFrame(step)
+}
+
+window.requestAnimationFrame(step)

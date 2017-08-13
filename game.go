@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-// Client struct is represents a single player.
+// Client struct represents a single player.
 type Client struct {
 	conn *websocket.Conn
 	x    int
@@ -16,13 +17,14 @@ type Client struct {
 // Game struct is the main struct in the game
 type Game struct {
 	clients []Client
+	gameMap [][]int
 }
 
 // RegisterClient should be used when we want to add new player.
 func (g *Game) RegisterClient(conn *websocket.Conn) {
-	client := Client{conn, 0, 0}
+	client := Client{conn, 5, 5}
 	g.clients = append(g.clients, client)
-	go client.loop()
+	go g.clients[len(g.clients)-1].loop()
 }
 
 func (client *Client) loop() {
@@ -37,6 +39,36 @@ func (client *Client) loop() {
 		}
 
 		client.parseClientMessage(string(p))
+	}
+}
+
+func (g *Game) getMapWithClients() [][]int {
+	currentMap := make([][]int, len(g.gameMap))
+
+	for i, row := range g.gameMap {
+		currentMap[i] = make([]int, len(row))
+		copy(currentMap[i], row)
+	}
+
+	for _, client := range g.clients {
+		currentMap[client.y][client.x] = 2
+	}
+
+	return currentMap
+}
+
+// ServerUpdateLoop function we use to send informations to clients
+func (g *Game) ServerUpdateLoop() {
+	for {
+		for _, client := range g.clients {
+			err := client.conn.WriteJSON(g.getMapWithClients())
+
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		time.Sleep(45 * time.Millisecond)
 	}
 }
 
