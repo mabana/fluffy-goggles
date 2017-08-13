@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"html/template"
 	"log"
 	"net/http"
@@ -66,7 +67,7 @@ func main() {
 		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	}
 
-	game = &Game{make([]Client, 0, 100), gameMap}
+	game = &Game{list.New(), gameMap}
 	go game.ServerUpdateLoop()
 
 	log.Fatal(http.ListenAndServe(getPort(), router))

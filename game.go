@@ -1,45 +1,24 @@
 package main
 
 import (
-	"fmt"
+	"container/list"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-// Client struct represents a single player.
-type Client struct {
-	conn *websocket.Conn
-	x    int
-	y    int
-}
-
 // Game struct is the main struct in the game
 type Game struct {
-	clients []Client
+	clients *list.List
 	gameMap [][]int
 }
 
 // RegisterClient should be used when we want to add new player.
 func (g *Game) RegisterClient(conn *websocket.Conn) {
-	client := Client{conn, 5, 5}
-	g.clients = append(g.clients, client)
-	go g.clients[len(g.clients)-1].loop()
-}
+	client := &Client{conn, 5, 5}
+	g.clients.PushBack(client)
 
-func (client *Client) loop() {
-	conn := client.conn
-	defer conn.Close()
-
-	for {
-		_, p, err := conn.ReadMessage()
-
-		if err != nil {
-			break
-		}
-
-		client.parseClientMessage(string(p))
-	}
+	go client.loop()
 }
 
 func (g *Game) getMapWithClients() [][]int {
@@ -50,8 +29,12 @@ func (g *Game) getMapWithClients() [][]int {
 		copy(currentMap[i], row)
 	}
 
-	for _, client := range g.clients {
-		currentMap[client.y][client.x] = 2
+	for e := g.clients.Front(); e != nil; e = e.Next() {
+		client, ok := e.Value.(*Client)
+
+		if ok {
+			currentMap[client.y][client.x] = 2
+		}
 	}
 
 	return currentMap
@@ -60,30 +43,18 @@ func (g *Game) getMapWithClients() [][]int {
 // ServerUpdateLoop function we use to send informations to clients
 func (g *Game) ServerUpdateLoop() {
 	for {
-		for _, client := range g.clients {
-			err := client.conn.WriteJSON(g.getMapWithClients())
+		for e := g.clients.Front(); e != nil; e = e.Next() {
+			client, ok := e.Value.(*Client)
 
-			if err != nil {
-				panic(err)
+			if ok {
+				err := client.conn.WriteJSON(g.getMapWithClients())
+
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 
 		time.Sleep(45 * time.Millisecond)
 	}
-}
-
-func (client *Client) parseClientMessage(msg string) {
-	switch msg {
-	case "move:left":
-		client.x--
-	case "move:up":
-		client.y++
-	case "move:right":
-		client.x++
-	case "move:down":
-		client.y--
-	default:
-		fmt.Println("Other: ", msg)
-	}
-	fmt.Println(client.x, client.y)
 }
