@@ -1,4 +1,4 @@
-let websocket = new WebSocket("ws://127.0.0.1:3000/wss")
+let websocket = new WebSocket(`ws://${window.location.host}/wss`)
 
 websocket.onopen = function(ev: Event) {
     websocket.send("First message")
@@ -38,8 +38,8 @@ function mapFieldColor(fieldContent: number): string {
 function render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, map: number[][]) {
     ctx.save()
 
-    for(let y: number = 0; y<12; y++) {
-        for(let x: number = 0; x<16; x++) {
+    for(let y: number = 0; y<13; y++) {
+        for(let x: number = 0; x<17; x++) {
             let cell: number = map[y][x]
             drawCell(ctx, x, y, mapFieldColor(cell))
         }
@@ -58,6 +58,7 @@ let map: number[][] = [
     [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
