@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"fmt"
 
 	"github.com/gorilla/websocket"
@@ -11,11 +12,12 @@ type Client struct {
 	conn *websocket.Conn
 	x    int
 	y    int
+	game *Game
 }
 
-func (client *Client) loop() {
+func (client *Client) loop(element *list.Element) {
 	conn := client.conn
-	defer conn.Close()
+	defer client.close(element)
 
 	for {
 		_, p, err := conn.ReadMessage()
@@ -26,6 +28,11 @@ func (client *Client) loop() {
 
 		client.parseClientMessage(string(p))
 	}
+}
+
+func (client *Client) close(element *list.Element) {
+	client.game.clients.Remove(element)
+	client.conn.Close()
 }
 
 func (client *Client) parseClientMessage(msg string) {

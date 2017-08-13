@@ -15,10 +15,10 @@ type Game struct {
 
 // RegisterClient should be used when we want to add new player.
 func (g *Game) RegisterClient(conn *websocket.Conn) {
-	client := &Client{conn, 5, 5}
-	g.clients.PushBack(client)
+	client := &Client{conn, 5, 5, game}
+	element := g.clients.PushBack(client)
 
-	go client.loop()
+	go client.loop(element)
 }
 
 func (g *Game) getMapWithClients() [][]int {
