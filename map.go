@@ -34,16 +34,16 @@ func calculateStartPoint(x, y, width, height, sliceWidth, sliceHeight int) point
 
 	if x < rx {
 		startPoint.X = 0
-	} else if x+rx > width {
-		startPoint.X = width - rx
+	} else if x+rx >= width {
+		startPoint.X = width - sliceWidth
 	} else {
 		startPoint.X = x - rx
 	}
 
 	if y < ry {
 		startPoint.Y = 0
-	} else if y+ry > height {
-		startPoint.Y = height - ry
+	} else if y+ry >= height {
+		startPoint.Y = height - sliceHeight
 	} else {
 		startPoint.Y = y - ry
 	}
