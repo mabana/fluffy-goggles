@@ -43,11 +43,14 @@ func (g *Game) getMapWithClients() [][]int {
 // ServerUpdateLoop function we use to send informations to clients
 func (g *Game) ServerUpdateLoop() {
 	for {
+		gameMap := g.getMapWithClients()
+
 		for e := g.clients.Front(); e != nil; e = e.Next() {
 			client, ok := e.Value.(*Client)
 
 			if ok {
-				err := client.conn.WriteJSON(g.getMapWithClients())
+				gameMapSlice := getPartOfArray(gameMap, client.x, client.y, MapWidth, MapHeight, ScreenWidth, ScreenHeight)
+				err := client.conn.WriteJSON(gameMapSlice)
 
 				if err != nil {
 					panic(err)

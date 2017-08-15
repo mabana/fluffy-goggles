@@ -49,3 +49,10 @@ func (client *Client) parseClientMessage(msg string) {
 		fmt.Println("Other: ", msg)
 	}
 }
+
+// func (client Client) getMapForClient(gameMap [][]int) [][]int {
+// 	x := client.x
+// 	y := client.y
+
+// 	if x
+// }

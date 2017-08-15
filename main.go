@@ -11,6 +11,13 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+const (
+	ScreenWidth  = 17
+	ScreenHeight = 13
+	MapWidth     = 51
+	MapHeight    = 39
+)
+
 var upgrader = websocket.Upgrader{}
 var game *Game
 
@@ -52,7 +59,7 @@ func main() {
 	router.GET("/wss", wss)
 	router.ServeFiles("/assets/*filepath", http.Dir("public"))
 
-	gameMap := GenerateMap(17, 13)
+	gameMap := GenerateMap(MapWidth, MapHeight)
 
 	game = &Game{list.New(), gameMap}
 	go game.ServerUpdateLoop()
