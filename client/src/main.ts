@@ -1,17 +1,27 @@
+import { Game } from './game'
+import { Player } from './player'
+import { Map, ViewportHeight, ViewportWidth } from './map'
+
+interface GreetingData {
+    gameMap: number[][]
+    x: number
+    y: number
+    mapWidth: number
+    mapHeight: number
+}
+
+let mainCanvas: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById('main-canvas')
+let ctx: CanvasRenderingContext2D = <CanvasRenderingContext2D> mainCanvas.getContext('2d')
 let websocket = new WebSocket(`ws://${window.location.host}/wss`)
 
 websocket.onopen = function(ev: Event) {
     websocket.send("First message")
 }
 
-websocket.onmessage = function(ev: MessageEvent) {
-    map = JSON.parse(ev.data)
-}
+let map: Map
+let player: Player
 
-let mainCanvas: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById('main-canvas')
-let ctx: CanvasRenderingContext2D = <CanvasRenderingContext2D> mainCanvas.getContext('2d')
-
-function drawCell(ctx: CanvasRenderingContext2D, x:number, y:number, color: string) {
+function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
     let xx: number = x * 50
     let yy: number = y * 50
     ctx.fillStyle = color
@@ -35,66 +45,54 @@ function mapFieldColor(fieldContent: number): string {
     }
 }
 
-function render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, map: number[][]) {
+function render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, map: Map) {
     ctx.save()
 
-    for(let y: number = 0; y<13; y++) {
-        for(let x: number = 0; x<17; x++) {
-            let cell: number = map[y][x]
-            drawCell(ctx, x, y, mapFieldColor(cell))
-        }
-    }
-
+    map.loopOverPartOfMap(player.x, player.y, (x: number, y: number, content: number) => {
+        drawCell(ctx, x, y, mapFieldColor(content))
+    })
+    
     ctx.restore()
 }
-
-let map: number[][] = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-]
-
-render(mainCanvas, ctx, map)
-
-document.addEventListener("keydown", function(this: Document, ev: KeyboardEvent){
-    ev.preventDefault()
-
-    switch(ev.keyCode) {
-        case 37: {
-            websocket.send("move:left")
-            break
-        }
-
-        case 38: {
-            websocket.send("move:up")
-            break
-        }
-
-        case 39: {
-            websocket.send("move:right")
-            break
-        }
-
-        case 40: {
-            websocket.send("move:down")
-            break
-        }
-    }  
-})
 
 function step() {
     render(mainCanvas, ctx, map)
     window.requestAnimationFrame(step)
 }
 
-window.requestAnimationFrame(step)
+websocket.onmessage = function(ev: MessageEvent) {
+    let greetingData: GreetingData = JSON.parse(ev.data)
+    map = new Map(greetingData.mapWidth, greetingData.mapHeight, greetingData.gameMap)
+    player = new Player(greetingData.x, greetingData.y)
+    window.requestAnimationFrame(step)
+}
+
+document.addEventListener("keydown", function(this: Document, ev: KeyboardEvent){
+    ev.preventDefault()
+
+    switch(ev.keyCode) {
+        case 37: {
+            player.x--
+            //websocket.send("move:left")
+            break
+        }
+
+        case 38: {
+            player.y--
+            //websocket.send("move:up")
+            break
+        }
+
+        case 39: {
+            player.x++
+            //websocket.send("move:right")
+            break
+        }
+
+        case 40: {
+            player.y++
+            //websocket.send("move:down")
+            break
+        }
+    }  
+})

@@ -2,7 +2,6 @@ package main
 
 import (
 	"container/list"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -10,7 +9,15 @@ import (
 // Game struct is the main struct in the game
 type Game struct {
 	clients *list.List
-	gameMap [][]int
+	gameMap [][]int // TODO: Game map should be pointer
+}
+
+type welcomeMessage struct {
+	GameMap   *[][]int `json:"gameMap"`
+	X         int      `json:"x"`
+	Y         int      `json:"y"`
+	MapWidth  int      `json:"mapWidth"`
+	MapHeight int      `json:"mapHeight"`
 }
 
 // RegisterClient should be used when we want to add new player.
@@ -18,46 +25,18 @@ func (g *Game) RegisterClient(conn *websocket.Conn) {
 	client := &Client{conn, 5, 5, game}
 	element := g.clients.PushBack(client)
 
+	g.sendGreetingData(client)
 	go client.loop(element)
 }
 
-func (g *Game) getMapWithClients() [][]int {
-	currentMap := make([][]int, len(g.gameMap))
-
-	for i, row := range g.gameMap {
-		currentMap[i] = make([]int, len(row))
-		copy(currentMap[i], row)
+func (g *Game) sendGreetingData(client *Client) {
+	msg := &welcomeMessage{
+		GameMap:   &g.gameMap,
+		X:         client.x,
+		Y:         client.y,
+		MapWidth:  MapWidth,
+		MapHeight: MapHeight,
 	}
 
-	for e := g.clients.Front(); e != nil; e = e.Next() {
-		client, ok := e.Value.(*Client)
-
-		if ok {
-			currentMap[client.y][client.x] = 2
-		}
-	}
-
-	return currentMap
-}
-
-// ServerUpdateLoop function we use to send informations to clients
-func (g *Game) ServerUpdateLoop() {
-	for {
-		gameMap := g.getMapWithClients()
-
-		for e := g.clients.Front(); e != nil; e = e.Next() {
-			client, ok := e.Value.(*Client)
-
-			if ok {
-				gameMapSlice := getPartOfArray(gameMap, client.x, client.y, MapWidth, MapHeight, ScreenWidth, ScreenHeight)
-				err := client.conn.WriteJSON(gameMapSlice)
-
-				if err != nil {
-					panic(err)
-				}
-			}
-		}
-
-		time.Sleep(45 * time.Millisecond)
-	}
+	client.conn.WriteJSON(msg)
 }

@@ -62,7 +62,7 @@ func main() {
 	gameMap := GenerateMap(MapWidth, MapHeight)
 
 	game = &Game{list.New(), gameMap}
-	go game.ServerUpdateLoop()
+	//go game.ServerUpdateLoop()
 
 	log.Fatal(http.ListenAndServe(getPort(), router))
 }
